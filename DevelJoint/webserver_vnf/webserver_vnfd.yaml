@@ -48,6 +48,7 @@ vnfd:vnfd-catalog:
             -   name: eth1
                 position: '2'
                 type: EXTERNAL
+                mac-address: 02:b2:9d:52:15:88
                 virtual-interface:
                     type: VIRTIO
                     bandwidth: '0'
