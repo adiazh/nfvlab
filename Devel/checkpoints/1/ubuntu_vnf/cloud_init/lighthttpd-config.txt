@@ -1,0 +1,27 @@
+#cloud-config
+
+password: osm-2018
+chpasswd: {expire: False}
+ssh_pwauth: True
+
+package_update: true
+
+packages:
+  - lighthttpd
+
+write_files:
+  - path: /etc/network/interfaces.d/51-ifcfg-ens4.cfg
+    content: |
+      auto ens4
+      iface ens4 inet dhcp        
+    permissions: '0644'
+  - path: /usr/local/bin/wrapper.sh
+    content: |
+      #!/bin/bash
+      echo "file created cloud-config"        
+    permissions: '0775'
+
+runcmd:
+ - [ ifup, ens4 ]
+
+manage_etc_hosts: True

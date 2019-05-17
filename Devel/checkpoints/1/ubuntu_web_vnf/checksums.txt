@@ -1,0 +1,3 @@
+5b347fda20382ffdbceb23218fbf7949  ubuntu_vnfd.yaml
+24ca61a808ce762fcd1ea31ad645d00c  cloud_init/ffmpeg-config.txt
+446d48a83c17eeae5eab906883092db5  icons/cirros-64.png

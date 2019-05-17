@@ -1,0 +1,19 @@
+#cloud-config
+
+password: osm-2018
+chpasswd: {expire: False}
+ssh_pwauth: True
+
+package_update: false
+
+write_files:
+  - path: /etc/network/interfaces.d/51-ifcfg-ens4.cfg
+    content: |
+      auto ens4
+      iface ens4 inet dhcp        
+    permissions: '0644'
+
+runcmd:
+ - [ ifup, ens4 ]
+
+manage_etc_hosts: True
