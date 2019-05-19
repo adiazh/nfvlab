@@ -1,2 +1,2 @@
-49f04ed665c863c53fd2e4a510f188d1  multi_VM_nsd.yaml
+49f04ed665c863c53fd2e4a510f188d1  multi-VM_nsd.yaml
 bc681c5a4c3cdc09c013df2d2239f3d2  icons/osm_2x.png

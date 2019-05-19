@@ -1,0 +1,2 @@
+12dc37126197182a81e55b629396c148  web_vnf_vnfd.yaml
+e257cad90421cab34878a698c318d1d8  cloud_init/httpd-config.txt
