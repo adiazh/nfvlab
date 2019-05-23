@@ -81,21 +81,25 @@ class VLANStarTopo( Topo ):
             self.addLink( h, s1 )
 
 class LabSetup ( Topo ):
-    def build (self, webip='10.213.1.1', mac='02:00:00:00:00:00'):
+    def build (self, webip='10.13.1.3/24', mac='02:61:fb:eb:25:a2'):
         s1 = self.addSwitch('s1')
         s2 = self.addSwitch('s2')
-        vm1 = self.addHost ('w1', cls=VLANHost, vlan=231)
-        vm2 = self.addHost ('w2', cls=VLANHost, vlan=231)
-        vm3 = self.addHost ('w3', cls=VLANHost, vlan=231)
-        vm4 = self.addHost ('w4', cls=VLANHost, vlan=231)
-        juju1 = self.addHost ('juju1', cls=VLANHost, vlan=513)
-        juju2 = self.addHost ('juju2', cls=VLANHost, vlan=513)
-        client = self.addHost ('client')
-        laptop = self.addHost ('laptop')
-        mport = self.addHost ('mport')
+        vm1 = self.addHost ('w1', cls=VLANHost, vlan=231, ip=webip, mac=mac )
+        vm2 = self.addHost ('w2', cls=VLANHost, vlan=232, ip=webip, mac=mac)
+        vm3 = self.addHost ('w3', cls=VLANHost, vlan=233, ip=webip, mac=mac)
+        vm4 = self.addHost ('w4', cls=VLANHost, vlan=234, ip=webip, mac=mac)
+        juju1 = self.addHost ('juju1', cls=VLANHost, vlan=513, ip='10.208.0.11')
+        juju2 = self.addHost ('juju2', cls=VLANHost, vlan=513, ip='10.208.0.12')
+        client = self.addHost ('client', ip = '172.16.24.130/24')
+        laptop = self.addHost ('laptop13', ip = '172.16.24.209/24')
+        mport = self.addHost ('mport', ip = '172.16.24.211/24')
         self.addLink( s1, s2 )
         self.addLink( s1, mport )
         self.addLink( s1, juju1 )
+        self.addLink( s1, vm1 )
+        self.addLink( s1, vm2 )
+        self.addLink( s1, vm3 )
+        self.addLink( s1, vm4 )
         self.addLink( s2, laptop )
         self.addLink( s2, client )
         self.addLink( s2, juju2 )
@@ -105,7 +109,7 @@ class LabSetup ( Topo ):
 def exampleCustomTags():
     """Simple example that exercises VLANStarTopo"""
 
-    net = Mininet( topo=VLANStarTopo())
+    net = Mininet( topo=VLANS2arTopo())
     cont=partial( RemoteController, ip='127.0.0.1', port=6633 )
     net.addController(self, name='ryu', controller=cont)
     net.start()
@@ -113,13 +117,12 @@ def exampleCustomTags():
     net.stop()
 
 def createLabTopo():
-    """Simple example that exercises VLANStarTopo"""
+    """Simple example that exercises VLANStarTopimport RemoteController"""
 
     from mininet.node import RemoteController
 
-    net = Mininet( topo=LabSetup() )
-    cont=partial( RemoteController, ip='127.0.0.1', port=6633 )
-    net.addController(name='ryu', controller=cont)
+    net = Mininet( topo=LabSetup(), controller=partial( RemoteController, ip='127.0.0.1', port=6633 ))
+    #net.addController(name='ryu', controller=cont)
     net.start()
     CLI( net )
     net.stop()
@@ -133,7 +136,7 @@ if __name__ == '__main__':
     from mininet.cli import CLI
     from mininet.topo import SingleSwitchTopo
     from mininet.log import setLogLevel
-    
+
 
     setLogLevel( 'info' )
 
