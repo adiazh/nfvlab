@@ -8,6 +8,7 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import vlan
+from ryu.ofproto import ether
 
 
 class webLoadBalancer(app_manager.RyuApp):
@@ -86,6 +87,9 @@ class webLoadBalancer(app_manager.RyuApp):
         parser = datapath.ofproto_parser
         in_port = msg.match['in_port']
 
+        doPush = 0
+        doPop = 0
+
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
         vlanh = pkt.get_protocols(vlan.vlan)
@@ -120,13 +124,27 @@ class webLoadBalancer(app_manager.RyuApp):
             if in_port == 2:
                 out_port = 1
                 self.logger.info("Soy S1 mando esto al S2 por que viene de mport")
-
             else:
-                if (in_port == 1 and vid == 0):
-                    out_port = 2
-                    self.logger.info("Soy S1 mando esto al mport viene no tageado")
+                if in_port == 1:
+                    if vid == 0:
+                        self.logger.info("Soy S1 mando esto al mport viene no tageado")
+                        out_port = 2
+                    else:
+                        if vid == 231:
+                            out_port = 4
+                        if vid == 232:
+                            out_port = 5
+                        if vid == 233:
+                            out_port = 6
+                        if vid == 234:
+                            out_port = 7
+                        self.logger.info("Soy %d mando al puerto %d por ser de vlan %d", dpid, out_port, vid )
                 else:
-                    out_port = ofproto.OFPP_FLOOD
+                    if (in_port == 4 or in_port == 5 or in_port == 6 or in_port == 7):
+                        self.logger.info("Soy el VM del puerto %d y me voy al S2", in_port)
+                        out_port = 1
+                    else:
+                        out_port = ofproto.OFPP_FLOOD
         else:
             if (dpid ==2 and in_port == 1 and vid == 0):
                 out_port = 2
@@ -134,10 +152,25 @@ class webLoadBalancer(app_manager.RyuApp):
                 if (dpid == 2 and in_port ==2 and (eth.ethertype == ether_types.ETH_TYPE_ARP or eth.ethertype == ether_types.ETH_TYPE_IP)):
                     out_port = 1
                 else:
-                    out_port = ofproto.OFPP_FLOOD
+                    if in_port==3:
+                        out_vlan = 231
+                        f = parser.OFPMatchField.make(ofproto.OXM_OF_VLAN_VID,out_vlan)
+                        doPush = 1
+                    if (in_port == 1 and vid != 0):
+                        out_port = 3
+                        doPop = 1
+                    else:
+                        out_port = ofproto.OFPP_FLOOD
+
+        if doPush == 1:
+            actions = [parser.OFPActionOutput(out_port), parser.OFPActionPushVlan(ether.ETH_TYPE_8021Q)]
+        else:
+            if doPop == 1:
+                actions = [parser.OFPActionOutput(out_port), parser.OFPActionPopVlan()]
+            else:
+                actions = [parser.OFPActionOutput(out_port)]
 
 
-        actions = [parser.OFPActionOutput(out_port)]
 
         # install a flow to avoid packet_in next time
         match=None
