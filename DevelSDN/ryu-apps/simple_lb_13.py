@@ -48,11 +48,11 @@ class webLoadBalancer(app_manager.RyuApp):
             mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
                                     match=match, instructions=inst)
         datapath.send_msg(mod)
-    
+
     def add_flow_send(self, in_port, out_port, msg, match=None, actions=None):
         datapath = msg.datapath
         ofproto = datapath.ofproto
-        parser = datapath.ofproto.parser
+        parser = datapath.ofproto_parser
 
         # if there is a match rule, install it
         if match is not None:
@@ -63,12 +63,12 @@ class webLoadBalancer(app_manager.RyuApp):
             else:
                 # _Unbuffered, install rule and send packet
                 self.add_flow(datapath, 1, match, actions)
-        
+
         #Send Packet
         data=None
         if msg.buffer_id == ofproto.OFP_NO_BUFFER:
             data = msg.data
-        
+
         out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data)
         datapath.send_msg(out)
 
