@@ -49,9 +49,9 @@ class VLANHost( Host ):
         # update the intf name and host's intf map
         newName = '%s.%d' % ( intf, vlan )
         # update the (Mininet) interface to refer to VLAN interface name
-        intf.name = newName
+        #intf.name = newName
         # add VLAN interface to host's name to intf map
-        self.nameToIntf[ newName ] = intf
+        #self.nameToIntf[ newName ] = intf
 
         return r
 
@@ -68,7 +68,7 @@ class VLANStarTopo( Topo ):
        are also n hosts that are not in any VLAN, also connected to
        the switch."""
 
-    def build( self, k=2, n=2, vlanBase=100 ):
+    def build( self, k=3, n=4, vlanBase=230 ):
         s1 = self.addSwitch( 's1' )
         for i in range( k ):
             vlan = vlanBase + i
@@ -80,14 +80,50 @@ class VLANStarTopo( Topo ):
             h = self.addHost( 'h%d' % (j+1) )
             self.addLink( h, s1 )
 
+class LabSetup ( Topo ):
+    def build (self, webip='10.213.1.1', mac='02:00:00:00:00:00'):
+        s1 = self.addSwitch('s1')
+        s2 = self.addSwitch('s2')
+        vm1 = self.addHost ('w1', cls=VLANHost, vlan=231)
+        vm2 = self.addHost ('w2', cls=VLANHost, vlan=231)
+        vm3 = self.addHost ('w3', cls=VLANHost, vlan=231)
+        vm4 = self.addHost ('w4', cls=VLANHost, vlan=231)
+        juju1 = self.addHost ('juju1', cls=VLANHost, vlan=513)
+        juju2 = self.addHost ('juju2', cls=VLANHost, vlan=513)
+        client = self.addHost ('client')
+        laptop = self.addHost ('laptop')
+        mport = self.addHost ('mport')
+        self.addLink( s1, s2 )
+        self.addLink( s1, mport )
+        self.addLink( s1, juju1 )
+        self.addLink( s2, laptop )
+        self.addLink( s2, client )
+        self.addLink( s2, juju2 )
+
+
 
 def exampleCustomTags():
     """Simple example that exercises VLANStarTopo"""
 
-    net = Mininet( topo=VLANStarTopo(), controller=RemoteController( 'c0', ip='127.0.0.1', port=6633 ) )
+    net = Mininet( topo=VLANStarTopo())
+    cont=partial( RemoteController, ip='127.0.0.1', port=6633 )
+    net.addController(self, name='ryu', controller=cont)
     net.start()
     CLI( net )
     net.stop()
+
+def createLabTopo():
+    """Simple example that exercises VLANStarTopo"""
+
+    from mininet.node import RemoteController
+
+    net = Mininet( topo=LabSetup() )
+    cont=partial( RemoteController, ip='127.0.0.1', port=6633 )
+    net.addController(name='ryu', controller=cont)
+    net.start()
+    CLI( net )
+    net.stop()
+
 
 if __name__ == '__main__':
     import sys
@@ -101,11 +137,12 @@ if __name__ == '__main__':
 
     setLogLevel( 'info' )
 
-    if not quietRun( 'which vconfig' ):
-        error( "Cannot find command 'vconfig'\nThe package",
-               "'vlan' is required in Ubuntu or Debian,",
-               "or 'vconfig' in Fedora\n" )
-        exit()
+#    if not quietRun( 'which vconfig' ):
+#        error( "Cannot find command 'vconfig'\nThe package",
+#               "'vlan' is required in Ubuntu or Debian,",
+#               "or 'vconfig' in Fedora\n" )
+#        exit()
 
 
-    exampleCustomTags()
+    #exampleCustomTags()
+    createLabTopo()
