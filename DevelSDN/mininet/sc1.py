@@ -1,28 +1,5 @@
 #!/usr/bin/env python
-"""
-vlanhost.py: Host subclass that uses a VLAN tag for the default interface.
 
-Dependencies:
-    This class depends on the "vlan" package
-    $ sudo apt-get install vlan
-
-Usage (example uses VLAN ID=1000):
-    From the command line:
-        sudo mn --custom vlanhost.py --host vlan,vlan=1000
-
-    From a script (see exampleUsage function below):
-        from functools import partial
-        from vlanhost import VLANHost
-
-        ....
-
-        host = partial( VLANHost, vlan=1000 )
-        net = Mininet( host=host, ... )
-
-    Directly running this script:
-        sudo python vlanhost.py 1000
-
-"""
 
 from mininet.node import Host
 from mininet.topo import Topo
@@ -61,29 +38,13 @@ hosts = { 'vlan': VLANHost }
 # pylint: disable=arguments-differ
 
 class LabSetup ( Topo ):
-    def build (self, webip='10.13.1.3/32', mac='02:61:fb:eb:25:a2'):
-        s1 = self.addSwitch(name='s1')
-        s2 = self.addSwitch('s2')
+    def build (self, webip='10.13.1.3/24', mac='02:61:fb:eb:25:a2'):
+        s1 = self.addSwitch('s1')
         vm1 = self.addHost ('w1', cls=VLANHost, vlan=231, ip=webip, mac=mac )
-        vm2 = self.addHost (name='w2', cls=VLANHost, vlan=232, ip=webip, mac=mac)
-        vm3 = self.addHost ('w3', cls=VLANHost, vlan=233, ip=webip, mac=mac)
-        vm4 = self.addHost ('w4', cls=VLANHost, vlan=234, ip=webip, mac=mac)
-        juju1 = self.addHost ('juju1', cls=VLANHost, vlan=513, ip='10.208.0.11')
-        juju2 = self.addHost ('juju2', cls=VLANHost, vlan=513, ip='10.208.0.12')
         client = self.addHost ('client', ip = '172.16.24.130/24')
-        lap = self.addHost ('lap', ip = '172.16.24.209/24')
-        mport = self.addHost ('mport', ip = '172.16.24.211/24')
-        self.addLink( s1, s2 )
-        self.addLink( s1, mport )
-        self.addLink( s1, juju1 )
         self.addLink( s1, vm1 )
-        self.addLink( s1, vm2 )
-        self.addLink( s1, vm3 )
-        self.addLink( s1, vm4 )
-        self.addLink( s2, lap )
-        self.addLink( s2, client )
-        self.addLink( s2, juju2 )
-
+        self.addLink( s1, client )
+        
 
 def createLabTopo():
     """ Creates Lab SDN"""

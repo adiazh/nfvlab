@@ -24,7 +24,6 @@ class webLoadBalancer(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-
         # install table-miss flow entry
         #
         # We specify NO BUFFER to max_len of the output action due to
@@ -88,9 +87,6 @@ class webLoadBalancer(app_manager.RyuApp):
         parser = datapath.ofproto_parser
         in_port = msg.match['in_port']
 
-        doPush = 0
-        doPop = 0
-
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
         vlanh = pkt.get_protocols(vlan.vlan)
@@ -98,19 +94,20 @@ class webLoadBalancer(app_manager.RyuApp):
         if eth.ethertype == ether_types.ETH_TYPE_LLDP:
             # ignore lldp packet
             return
+        
+        if eth.ethertype == 34525:
+            # ignore IPv6
+            return
 
         dst = eth.dst
         src = eth.src
 
         dpid = datapath.id
-        #self.mac_to_port.setdefault(dpid, {})
 
-        vlanid = 0
-
-        if vlanh:
-            vlanid = vlanh[0].vid
-
-
+        out_port = ofproto.OFPP_FLOOD
+        actions = [ ]
+        match=None
+        
         #self.logger.info("packet in %s %s %s %s %s", dpid, src, dst, in_port, vlanid)
 
         out_port= ofproto.OFPP_FLOOD  # Flood packet if there isn't a further condition to deal with it
@@ -120,66 +117,37 @@ class webLoadBalancer(app_manager.RyuApp):
 
         if dpid == 1:         
         # Forwarding logic for S1
-            if in_port == 2:  
-                # Traffic from mport se envia al s2
-                out_port = 1  
-            if (in_port == 1 and vlanid == 0):
+            if (in_port == 1 and vlanh):
                 # laptop sends traffic untagged
                 out_port = 2
-            if (in_port == 1 and vlanid != 0):  
-                # Tagged traffic from S2
-                out_port = vlanTagged2Port_in_s1[vlanid]
-            if  in_port in [4,5,6,7]:
-                # Tagged traffic from VMs to S2
-                out_port = vlanTagged2Port_out_s1[vlanid]
-            if in_port == 3:
-                out_port = 1
-            
-        if dpid ==2:         
-            # Forwarding logic for S2
-            if (in_port == 1 and vlanid == 0):  
+                #self.logger.info("From VM ... ")
+                self.logger.info(dpid)
+                self.logger.info(in_port)
+                self.logger.info(eth)
+                self.logger.info(vlanh)
+                actions.append(parser.OFPActionOutput(out_port))
+                actions.append(parser.OFPActionPopVlan())
+                match=parser.OFPMatch(in_port=in_port, eth_src=src)
+                
+            if (in_port == 2):  
                 # Untagged traffic in ISL to laptop
-                out_port = 2
-            if (in_port == 2 and (eth.ethertype == ether_types.ETH_TYPE_ARP or eth.ethertype == ether_types.ETH_TYPE_IP)):
                 out_port = 1
-            if in_port==3:
-                out_vlan = 231
-                doPush = 1
-            if (in_port == 1 and vlanid != 0):
-                out_port = 3
-                doPop = 1
-            if in_port == 4:
-                out_port = 1
-        
-        self.logger.info("Sw=%s, InPort=%s, OutPort=%s, VlanId=%s, src=%s, dst=%s, ether:%s", dpid,in_port,out_port,vlanid,src,dst,eth.ethertype)
-        actions = [parser.OFPActionOutput(out_port)]
-        
-        if doPush == 1:
-            actions = [
-                parser.OFPActionPushVlan(ether.ETH_TYPE_8021Q),
-                parser.OFPActionSetField(vlan_vid=out_vlan),
-                parser.OFPActionOutput(out_port)]
-        if doPop == 1:
-            actions = [
-                parser.OFPActionPopVlan(),
-                parser.OFPActionOutput(out_port)]
-
+                #self.logger.info("From client ... ")
+                self.logger.info(dpid)
+                self.logger.info(in_port)
+                self.logger.info(eth)
+                self.logger.info(vlanh)
+                #actions.append (parser.OFPActionPushVlan(ether.ETH_TYPE_8021Q)
+                actions.append (parser.OFPActionPushVlan(33024))
+                actions.append (parser.OFPActionSetField(vlan_vid=231))
+                match=parser.OFPMatch(in_port=in_port, eth_src=src)
+            
+                   
         # install a flow to avoid packet_in next time
-        match=None
-        if out_port != ofproto.OFPP_FLOOD:
-            match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
-            # verify if we have a valid buffer_id, if yes avoid to send both
-            # flow_mod & packet_out
-            #if msg.buffer_id != ofproto.OFP_NO_BUFFER:
-            #    self.add_flow(datapath, 1, match, actions, msg.buffer_id)
-            #    return
-            #else:
-            #    self.add_flow(datapath, 1, match, actions)
-        #data = None
-        #if msg.buffer_id == ofproto.OFP_NO_BUFFER:
-        #    data = msg.data
+        
+        if match is None:
+            if out_port != ofproto.OFPP_FLOOD:
+                match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
+         
 
-        #out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
-        #                          in_port=in_port, actions=actions, data=data)
-        #datapath.send_msg(out)
         self.add_flow_send(in_port, out_port, msg, match=match, actions=actions)
