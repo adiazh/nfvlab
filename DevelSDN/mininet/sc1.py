@@ -41,7 +41,7 @@ class LabSetup ( Topo ):
     def build (self, webip='10.13.1.3/24', mac='02:61:fb:eb:25:a2'):
         s1 = self.addSwitch('s1')
         vm1 = self.addHost ('w1', cls=VLANHost, vlan=231, ip=webip, mac=mac )
-        client = self.addHost ('client', ip = '172.16.24.130/24')
+        client = self.addHost ('client', ip = '10.13.1.10/24')
         self.addLink( s1, vm1 )
         self.addLink( s1, client )
         
