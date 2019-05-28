@@ -41,12 +41,36 @@ class webLoadBalancer(app_manager.RyuApp):
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
                                              actions)]
         if buffer_id:
-            mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id,
-                                    priority=priority, match=match,
-                                    instructions=inst)
+            #mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id,
+            #                        priority=priority, match=match,
+            #                        instructions=inst)
+            mod = parser.OFPFlowMod(datapath=datapath,
+                                    priority=priority,
+                                    match=match,
+                                    instructions=inst,
+                                    buffer_id=buffer_id,
+                                    command=ofproto.OFPFC_ADD,
+                                    cookie=0,
+                                    cookie_mask=0,
+                                    table_id=0,
+                                    idle_timeout=0,
+                                    hard_timeout =0
+                                    )
         else:
-            mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
-                                    match=match, instructions=inst)
+            #mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
+            #                        match=match, instructions=inst)
+            mod = parser.OFPFlowMod(datapath=datapath,
+                                    priority=priority,
+                                    match=match,
+                                    instructions=inst,
+                                    buffer_id=ofproto.OFP_NO_BUFFER,
+                                    command=ofproto.OFPFC_ADD,
+                                    cookie=0,
+                                    cookie_mask=0,
+                                    table_id=0,
+                                    idle_timeout=0,
+                                    hard_timeout =0
+                                    )
         datapath.send_msg(mod)
 
     def add_flow_send(self, in_port, out_port, msg, match=None, actions=None):

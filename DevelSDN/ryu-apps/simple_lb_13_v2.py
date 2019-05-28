@@ -16,14 +16,12 @@ class webLoadBalancer(app_manager.RyuApp):
 
     def __init__(self, *args, **kwargs):
         super(webLoadBalancer, self).__init__(*args, **kwargs)
-        self.mac_to_port = {}
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         datapath = ev.msg.datapath
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
-
 
         # install table-miss flow entry
         #
