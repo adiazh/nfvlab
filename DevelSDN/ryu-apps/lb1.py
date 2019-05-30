@@ -75,7 +75,7 @@ class webLoadBalancer(app_manager.RyuApp):
             if msg.buffer_id != ofproto.OFP_NO_BUFFER:
                 # Buffered, install rule and return
                 self.add_flow(datapath, 1, match, actions, msg.buffer_id)
-                #return
+                return
             else:
                 # _Unbuffered, install rule and send packet
                 self.add_flow(datapath, 1, match, actions)
@@ -136,17 +136,15 @@ class webLoadBalancer(app_manager.RyuApp):
         # Forwarding logic for S1
             if (in_port == 1 and vlan_header_present == 1):
                 out_port = 2
-                
-                #self.logger.info("From VM ... ")
                 #self.logger.info(dpid)
                 self.logger.info(in_port)
                 self.logger.info(eth)
                 self.logger.info(vlan_header)
                 #actions.append(parser.OFPActionOutput(out_port))
                 #actions.append(parser.OFPActionPopVlan())
-                match = parser.OFPMatch(in_port=in_port, eth_dst=dst, vlan_vid=(0x1000 | src_vlan))  
-                actions=[parser.OFPActionOutput(out_port),parser.OFPActionPopVlan()]
-                #match=parser.OFPMatch(in_port=in_port, eth_src=src)
+                #match = parser.OFPMatch(in_port=in_port, eth_src=src, vlan_vid=(0x1000 | src_vlan))
+                match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000, 0x1000))  
+                actions=[parser.OFPActionPopVlan(),parser.OFPActionOutput(out_port)]
                 
             if (in_port == 2):  
                 # Untagged traffic in ISL to laptop
@@ -159,8 +157,8 @@ class webLoadBalancer(app_manager.RyuApp):
                 #actions=[parser.OFPActionOutput(out_port)]
                 #actions.append (parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q))
                 #actions.append (parser.OFPActionSetField(vlan_vid=231))
-                match=parser.OFPMatch(in_port=in_port, eth_dst=dst)
-                actions = [parser.OFPActionPushVlan(33024), parser.OFPActionSetField(vlan_vid=(0x1000 | dst_vlan)), parser.OFPActionOutput(out_port)]
+                match=parser.OFPMatch(in_port=in_port, vlan_vid=0x0000)
+                actions = [parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q), parser.OFPActionSetField(vlan_vid=(0x1000 | dst_vlan)), parser.OFPActionOutput(out_port)]
 
         # install a flow to avoid packet_in next time
         

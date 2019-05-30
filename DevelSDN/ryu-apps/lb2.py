@@ -123,7 +123,8 @@ class webLoadBalancer(app_manager.RyuApp):
             src_vlan=vlan_header[0].vid
         else:
            vlan_header_present = 0
-           dst_vlan = 231 
+           dst_vlan = 231
+           src_vlan = 0
         
         if dpid == 1:         
         # Forwarding logic for S1
@@ -141,7 +142,7 @@ class webLoadBalancer(app_manager.RyuApp):
 
             if (in_port == 1 and vlan_header_present == 1):  
                 # Tagged traffic from S2
-                out_port = vlan_dstPort_in_s1[vlanid]
+                out_port = vlan_dstPort_in_s1[src_vlan]
                 match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000, 0x1000))
                 actions=[parser.OFPActionOutput(out_port)]
 
@@ -182,7 +183,7 @@ class webLoadBalancer(app_manager.RyuApp):
                 else:
                     out_port = 3
                     match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000 | src_vlan))
-                    actions=[parser.OFPActionOutput(out_port)]
+                    actions=[parser.OFPActionPopVlan(),parser.OFPActionOutput(out_port)]
 
             if in_port == 4:
                 out_port = 1
