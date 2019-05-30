@@ -141,7 +141,7 @@ class webLoadBalancer(app_manager.RyuApp):
 
             if (in_port == 1 and vlan_header_present == 1):  
                 # Tagged traffic from S2
-                out_port = vlan_dstPort_in_s1[vlanid]
+                out_port = vlan_dstPort_in_s1[src_vlan]
                 match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000, 0x1000))
                 actions=[parser.OFPActionOutput(out_port)]
 

@@ -31,7 +31,6 @@ class webLoadBalancer(app_manager.RyuApp):
 
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
                                              actions)]
-
         if buffer_id:
             # mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id,
             #                         priority=priority, match=match,
