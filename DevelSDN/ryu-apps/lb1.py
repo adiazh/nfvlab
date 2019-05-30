@@ -7,7 +7,6 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib.packet import vlan
-from ryu.ofproto import ether
 
 
 class webLoadBalancer(app_manager.RyuApp):
@@ -32,6 +31,7 @@ class webLoadBalancer(app_manager.RyuApp):
 
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
                                              actions)]
+
         if buffer_id:
             # mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id,
             #                         priority=priority, match=match,
@@ -41,7 +41,7 @@ class webLoadBalancer(app_manager.RyuApp):
                                     match=match,
                                     instructions=inst,
                                     buffer_id=buffer_id,
-                                    command=ofproto.OFPFC_ADD,
+           #                         command=ofproto.OFPFC_ADD,
                                     cookie=0,
                                     cookie_mask=0,
                                     table_id=0,
@@ -56,7 +56,7 @@ class webLoadBalancer(app_manager.RyuApp):
                                     match=match,
                                     instructions=inst,
                                     buffer_id=ofproto.OFP_NO_BUFFER,
-                                    command=ofproto.OFPFC_ADD,
+            #                        command=ofproto.OFPFC_ADD,
                                     cookie=0,
                                     cookie_mask=0,
                                     table_id=0,
@@ -75,17 +75,17 @@ class webLoadBalancer(app_manager.RyuApp):
             if msg.buffer_id != ofproto.OFP_NO_BUFFER:
                 # Buffered, install rule and return
                 self.add_flow(datapath, 1, match, actions, msg.buffer_id)
-                return
+                #return
             else:
                 # _Unbuffered, install rule and send packet
                 self.add_flow(datapath, 1, match, actions)
 
-        #Send Packet
-        data=None
-        if msg.buffer_id == ofproto.OFP_NO_BUFFER:
-            data = msg.data
-        out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data)
-        datapath.send_msg(out)
+            #Send Packet
+            data=None
+            if msg.buffer_id == ofproto.OFP_NO_BUFFER:
+                data = msg.data
+            out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, in_port=in_port, actions=actions, data=data)
+            datapath.send_msg(out)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
@@ -116,14 +116,15 @@ class webLoadBalancer(app_manager.RyuApp):
             vlan_header_present = 1
             src_vlan=vlan_header[0].vid
         else:
-           vlan_header_present = 0 
+           vlan_header_present = 0
+           dst_vlan = 231 
 
         dst = eth.dst
         src = eth.src
 
         out_port = ofproto.OFPP_FLOOD
-        actions = [ ]
-        match=None
+        
+        #actions = []
         
         #self.logger.info("packet in %s %s %s %s %s", dpid, src, dst, in_port, vlanid)
 
@@ -135,32 +136,37 @@ class webLoadBalancer(app_manager.RyuApp):
         # Forwarding logic for S1
             if (in_port == 1 and vlan_header_present == 1):
                 out_port = 2
+                
                 #self.logger.info("From VM ... ")
-                self.logger.info(dpid)
+                #self.logger.info(dpid)
                 self.logger.info(in_port)
                 self.logger.info(eth)
                 self.logger.info(vlan_header)
-                actions.append(parser.OFPActionOutput(out_port))
-                actions.append(parser.OFPActionPopVlan())
-                match=parser.OFPMatch(in_port=in_port, eth_src=src)
+                #actions.append(parser.OFPActionOutput(out_port))
+                #actions.append(parser.OFPActionPopVlan())
+                match = parser.OFPMatch(in_port=in_port, eth_dst=dst, vlan_vid=(0x1000 | src_vlan))  
+                actions=[parser.OFPActionOutput(out_port),parser.OFPActionPopVlan()]
+                #match=parser.OFPMatch(in_port=in_port, eth_src=src)
                 
             if (in_port == 2):  
                 # Untagged traffic in ISL to laptop
                 out_port = 1
                 #self.logger.info("From client ... ")
-                self.logger.info(dpid)
+                #self.logger.info(dpid)
                 self.logger.info(in_port)
                 self.logger.info(eth)
                 self.logger.info(vlan_header)
-                #actions.append (parser.OFPActionPushVlan(ether.ETH_TYPE_8021Q)
-                actions.append (parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q))
-                actions.append (parser.OFPActionSetField(vlan_vid=231))
-                match=parser.OFPMatch(in_port=in_port, eth_src=src)
+                #actions=[parser.OFPActionOutput(out_port)]
+                #actions.append (parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q))
+                #actions.append (parser.OFPActionSetField(vlan_vid=231))
+                match=parser.OFPMatch(in_port=in_port, eth_dst=dst)
+                actions = [parser.OFPActionPushVlan(33024), parser.OFPActionSetField(vlan_vid=(0x1000 | dst_vlan)), parser.OFPActionOutput(out_port)]
 
         # install a flow to avoid packet_in next time
         
         if match is None:
-            if out_port != ofproto.OFPP_FLOOD:
-                match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
+        #if out_port != ofproto.OFPP_FLOOD:
+            self.logger.info('no match')
+            match = parser.OFPMatch(in_port=in_port)
          
         self.add_flow_send(in_port, out_port, msg, match=match, actions=actions)  
