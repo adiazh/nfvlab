@@ -61,7 +61,7 @@ hosts = { 'vlan': VLANHost }
 # pylint: disable=arguments-differ
 
 class LabSetup ( Topo ):
-    def build (self, webip='10.13.1.3/32', mac='02:61:fb:eb:25:a2'):
+    def build (self, webip='10.13.1.3/24', mac='02:61:fb:eb:25:a2'):
         s1 = self.addSwitch(name='s1')
         s2 = self.addSwitch('s2')
         vm1 = self.addHost ('w1', cls=VLANHost, vlan=231, ip=webip, mac=mac )
@@ -70,9 +70,9 @@ class LabSetup ( Topo ):
         vm4 = self.addHost ('w4', cls=VLANHost, vlan=234, ip=webip, mac=mac)
         juju1 = self.addHost ('juju1', cls=VLANHost, vlan=513, ip='10.208.0.11')
         juju2 = self.addHost ('juju2', cls=VLANHost, vlan=513, ip='10.208.0.12')
-        client = self.addHost ('client', ip = '172.16.24.130/24')
-        lap = self.addHost ('lap', ip = '172.16.24.209/24')
-        mport = self.addHost ('mport', ip = '172.16.24.211/24')
+        client = self.addHost ('client', ip = '10.13.1.10/24')
+        lap = self.addHost ('lap', ip = '172.16.24.209/23')
+        mport = self.addHost ('mport', ip = '172.16.24.211/23')
         self.addLink( s1, s2 )
         self.addLink( s1, mport )
         self.addLink( s1, juju1 )
