@@ -110,8 +110,8 @@ class webLoadBalancer(app_manager.RyuApp):
             return
         if eth.ethertype == 34525:
             # ignore IPv6
-            return    
-        
+            return
+
         dst = eth.dst
         src = eth.src
 
@@ -125,10 +125,10 @@ class webLoadBalancer(app_manager.RyuApp):
            vlan_header_present = 0
            dst_vlan = 231
            src_vlan = 0
-        
-        if dpid == 1:         
+
+        if dpid == 1:
         # Forwarding logic for S1
-            if in_port == 2:  
+            if in_port == 2:
                 # Traffic from mport se envia al s2
                 out_port = 1
                 match = parser.OFPMatch(in_port=in_port)
@@ -140,27 +140,45 @@ class webLoadBalancer(app_manager.RyuApp):
                 match = parser.OFPMatch(in_port=in_port, vlan_vid=0x0000)
                 actions=[parser.OFPActionOutput(out_port)]
 
-            if (in_port == 1 and vlan_header_present == 1):  
+            if (in_port == 1 and vlan_header_present == 1):
                 # Tagged traffic from S2
                 out_port = vlan_dstPort_in_s1[src_vlan]
-                match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000, 0x1000))
+                match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000 | src_vlan))
                 self.logger.info(match)
                 actions=[parser.OFPActionOutput(out_port)]
 
-            if  in_port in [4,5,6,7]:
+            if  in_port == 4:
                 # Tagged traffic from VMs to S2
                 out_port = 1
-                match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000, 0x1000))
+                match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000 | src_vlan))
+                actions=[parser.OFPActionOutput(out_port)]
+
+            if  in_port == 5:
+                # Tagged traffic from VMs to S2
+                out_port = 1
+                match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000 | src_vlan))
+                actions=[parser.OFPActionOutput(out_port)]
+
+            if  in_port == 6:
+                # Tagged traffic from VMs to S2
+                out_port = 1
+                match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000 | src_vlan))
+                actions=[parser.OFPActionOutput(out_port)]
+
+            if  in_port == 7:
+                # Tagged traffic from VMs to S2
+                out_port = 1
+                match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000 | src_vlan))
                 actions=[parser.OFPActionOutput(out_port)]
 
             if in_port == 3:
                 out_port = 1
                 match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000 | juju_vlan))
                 actions=[parser.OFPActionOutput(out_port)]
-            
-        if dpid == 2:         
+
+        if dpid == 2:
             # Forwarding logic for S2
-            if (in_port == 1 and vlan_header_present == 0):  
+            if (in_port == 1 and vlan_header_present == 0):
                 # Untagged traffic in ISL to laptop
                 out_port = 2
                 match = parser.OFPMatch(in_port=in_port, vlan_vid=0x0000)
@@ -173,7 +191,7 @@ class webLoadBalancer(app_manager.RyuApp):
 
             if in_port == 3:
                 out_port = 1
-                match=parser.OFPMatch(in_port=in_port, eth_dst="02:61:fb:eb:25:a2")
+                match=parser.OFPMatch(in_port=in_port)
                 actions = [parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q), parser.OFPActionSetField(vlan_vid=(0x1000 | dst_vlan)), parser.OFPActionOutput(out_port)]
 
             if (in_port == 1 and vlan_header_present == 1):
@@ -190,9 +208,9 @@ class webLoadBalancer(app_manager.RyuApp):
                 out_port = 1
                 match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000 | juju_vlan))
                 actions=[parser.OFPActionOutput(out_port)]
-        
+
         self.logger.info("Sw=%s, InPort=%s, OutPort=%s, VlanId=%s, src=%s, dst=%s, ether:%s", dpid,in_port,out_port,src_vlan,src,dst,eth.ethertype)
-        
+
         if match is None:
             self.logger.info('no match')
             match = parser.OFPMatch(in_port=in_port)
