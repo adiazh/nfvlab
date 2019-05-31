@@ -62,10 +62,10 @@ hosts = { 'vlan': VLANHost }
 
 class LabSetup ( Topo ):
     def build (self, webip='10.13.1.3/24', mac='02:61:fb:eb:25:a2'):
-        s1 = self.addSwitch(name='s1')
+        s1 = self.addSwitch('s1')
         s2 = self.addSwitch('s2')
         vm1 = self.addHost ('w1', cls=VLANHost, vlan=231, ip=webip, mac=mac )
-        vm2 = self.addHost (name='w2', cls=VLANHost, vlan=232, ip=webip, mac=mac)
+        vm2 = self.addHost ('w2', cls=VLANHost, vlan=232, ip=webip, mac=mac)
         vm3 = self.addHost ('w3', cls=VLANHost, vlan=233, ip=webip, mac=mac)
         vm4 = self.addHost ('w4', cls=VLANHost, vlan=234, ip=webip, mac=mac)
         juju1 = self.addHost ('juju1', cls=VLANHost, vlan=513, ip='10.208.0.11')
@@ -104,7 +104,6 @@ if __name__ == '__main__':
     from mininet.cli import CLI
     from mininet.topo import SingleSwitchTopo
     from mininet.log import setLogLevel
-
 
     setLogLevel( 'info' )
 

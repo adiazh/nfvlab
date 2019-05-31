@@ -12,18 +12,22 @@ from ryu.lib.packet import vlan
 class webLoadBalancer(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
-    port_to_tag = {4:231, 5:232, 6:233, 7:234}
+    port_to_tag = {3:513, 4:231, 5:232, 6:233, 7:234}
+    drop_actions=[]
 
     def __init__(self, *args, **kwargs):
         super(webLoadBalancer, self).__init__(*args, **kwargs)
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
+        
         datapath = ev.msg.datapath
 
         if datapath.id == 1:
+            self.logger.info("Configuring datapath %s", datapath.id)
             self.switch1_features_handler(ev)
         else:
+            self.logger.info("Configuring datapath %s", datapath.id)
             self.switch2_features_handler(ev)
 
     
@@ -35,7 +39,7 @@ class webLoadBalancer(app_manager.RyuApp):
             self.logger.debug("packet truncated: only %s of %s bytes",
                               ev.msg.msg_len, ev.msg.total_len)
         msg = ev.msg
-        #datapath = msg.datapath
+        datapath = msg.datapath
         #ofproto = datapath.ofproto
         #parser = datapath.ofproto_parser
         in_port = msg.match['in_port']
@@ -44,7 +48,7 @@ class webLoadBalancer(app_manager.RyuApp):
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
         
-        self.logger.info("Ignoring Packet %s %s %s %s", dpid,in_port,eth.src,eth.dst)
+        #self.logger.info("Ignoring Packet %s %s %s %s", dpid,in_port,eth.src,eth.dst)
     
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         ofproto = datapath.ofproto
@@ -85,6 +89,16 @@ class webLoadBalancer(app_manager.RyuApp):
                                     )
         datapath.send_msg(mod)
     
+    def send_actions(self,out_port,parser,pop=0,push=0,vlan=0):
+        actions=[]
+        if pop == 1:
+            actions.append(parser.OFPActionPopVlan())
+        if (push == 1 and vlan !=0):
+            actions.append(parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q))
+            actions.append(parser.OFPActionSetField(vlan_vid=(0x1000 | vlan)))
+        actions.append(parser.OFPActionOutput(out_port))
+        return actions
+    
     def switch1_features_handler(self, ev):
         datapath = ev.msg.datapath
         ofproto = datapath.ofproto
@@ -101,21 +115,21 @@ class webLoadBalancer(app_manager.RyuApp):
         self.add_flow(datapath, 0, match=match, actions=actions)
         # Drop LLDP
         match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_LLDP)
-        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions())
+        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions)
         # Drop STDP BPDU
         match = parser.OFPMatch(eth_dst="01:80:c2:00:00:00")
-        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions())
+        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions)
         match = parser.OFPMatch(eth_dst="01:00:0c:cc:cc:cd")
-        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions())
+        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions)
         # Drop Broadcast Sources
         match = parser.OFPMatch(eth_src="ff:ff:ff:ff:ff:ff")
-        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions())
+        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions)
         # untagged traffic to mport
-        match = parser.OFPMatch(in_port=1, vlan_vid = 0)
-        actions = self.send_actions(6,parser)
+        match = parser.OFPMatch(in_port=1, vlan_vid=0x00000)
+        actions = self.send_actions(2,parser)
         self.add_flow(datapath, 900, match=match, actions=actions)
         # all traffic from mport
-        match = parser.OFPMatch(in_port=6)
+        match = parser.OFPMatch(in_port=2)
         actions = self.send_actions(1,parser)
         self.add_flow(datapath, 900, match=match, actions=actions)
         for port in self.port_to_tag.keys():
@@ -128,21 +142,7 @@ class webLoadBalancer(app_manager.RyuApp):
             actions = self.send_actions(port, parser)
             self.add_flow(datapath, 950, match=match, actions=actions)
     
-    def send_actions(out_port,parser,vlan=231,pop=0,push=0):
-        actions=[]
-        # actions = [parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q), parser.OFPActionSetField(vlan_vid=(0x1000 | dst_vlan)), parser.OFPActionOutput(out_port)]
-        if pop == 1:
-            actions.append(parser.OFPActionPopVlan())
-        if push == 1:
-            actions.append(parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q))
-            actions.append(parser.OFPActionSetField(vlan_vid=(0x1000 | vlan)))
-        actions.append(parser.OFPActionOutput(out_port))
-        return actions
-    
-    def drop_actions():
-        actions=[]
 
-        return actions
 
     def switch2_features_handler(self, ev):
         datapath = ev.msg.datapath
@@ -154,34 +154,36 @@ class webLoadBalancer(app_manager.RyuApp):
         self.add_flow(datapath, 0, match=match, actions=actions)
         # Drop LLDP
         match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_LLDP)
-        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions())
+        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions)
         # Drop STDP BPDU
         match = parser.OFPMatch(eth_dst="01:80:c2:00:00:00")
-        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions())
+        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions)
         match = parser.OFPMatch(eth_dst="01:00:0c:cc:cc:cd")
-        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions())
+        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions)
         # Drop Broadcast Sources
         match = parser.OFPMatch(eth_src="ff:ff:ff:ff:ff:ff")
-        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions())
-        #
+        self.add_flow(datapath, 1000, match=match, actions=self.drop_actions)
         # TODO:
-        # Untagged traffic in ISL to laptop
+        # Untagged traffic from in_port=1 to out_port=2
         match = parser.OFPMatch(in_port=1, vlan_vid=0x0000)
-        actions = self.send_actions(2, parser)
+        actions = self.send_actions(2,parser)
         self.add_flow(datapath, 1000, match=match, actions=actions)
         # Tagged traffic juju backplane 
         match = parser.OFPMatch(in_port=1,vlan_vid=(0x1000 | 513))
         actions = self.send_actions(4, parser)
         self.add_flow(datapath, 1000, match=match, actions=actions)
-        # any traf from port 2 to out 1 
+        match = parser.OFPMatch(in_port=4,vlan_vid=(0x1000 | 513))
+        actions = self.send_actions(1, parser)
+        self.add_flow(datapath, 1000, match=match, actions=actions)
+        # Any traffic from in_port=2 to out_port=1 
         match = parser.OFPMatch(in_port=2)
         actions = self.send_actions(1, parser)
         self.add_flow(datapath, 1000, match=match, actions=actions)
-        # Tagged traffic  
-        match = parser.OFPMatch(in_port=1,vlan_vid=(0x1000, 0x1000))
+        # Handle tagged traffic from VMs and untagged it before sending it to client (out_port=3) 
+        match = parser.OFPMatch(in_port=1,vlan_vid=(0x1000, 0x1000))   # This rules messes up with the juju backplane a bit, does it not? I incremented priotity just in case
         actions = self.send_actions(3, parser,pop=1,push=0)
-        self.add_flow(datapath, 1000, match=match, actions=actions)
-        # push   
+        self.add_flow(datapath, 998, match=match, actions=actions)
+        # Push VM! vlan tagged to client's incoming   
         match = parser.OFPMatch(in_port=3,vlan_vid=0x0000)
-        actions = self.send_actions(1, parser,vlan=231,pop=0,push=1)
+        actions = self.send_actions(1, parser,pop=0,push=1,vlan=231)
         self.add_flow(datapath, 1000, match=match, actions=actions)
