@@ -115,7 +115,7 @@ class webLoadBalancer(app_manager.RyuApp):
         dst = eth.dst
         src = eth.src
 
-        vlan_dstPort_in_s1 = {513:3, 231: 4, 232: 5, 233: 6, 234: 7}
+        vlan_dstPort_in_s1 = {513:3, 231:4, 232:5, 233:6, 234:7}
         juju_vlan = 513
 
         if eth.ethertype == ether_types.ETH_TYPE_8021Q:       #Checking for VLAN Tagged Packet
@@ -144,6 +144,7 @@ class webLoadBalancer(app_manager.RyuApp):
                 # Tagged traffic from S2
                 out_port = vlan_dstPort_in_s1[src_vlan]
                 match = parser.OFPMatch(in_port=in_port,vlan_vid=(0x1000, 0x1000))
+                self.logger.info(match)
                 actions=[parser.OFPActionOutput(out_port)]
 
             if  in_port in [4,5,6,7]:
@@ -172,7 +173,7 @@ class webLoadBalancer(app_manager.RyuApp):
 
             if in_port == 3:
                 out_port = 1
-                match=parser.OFPMatch(in_port=in_port, vlan_vid=0x0000)
+                match=parser.OFPMatch(in_port=in_port, eth_dst="02:61:fb:eb:25:a2")
                 actions = [parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q), parser.OFPActionSetField(vlan_vid=(0x1000 | dst_vlan)), parser.OFPActionOutput(out_port)]
 
             if (in_port == 1 and vlan_header_present == 1):
