@@ -6,3 +6,6 @@ openstack network delete tag1
 openstack network delete tag2
 openstack network delete tag3
 openstack network delete tag4
+
+#openstack network delete osm-net
+

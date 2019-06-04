@@ -1,0 +1,7 @@
+mkdir $HOME/images
+cd $HOME/images
+wget http://cloud-images.ubuntu.com/releases/16.04/release/ubuntu-16.04-server-cloudimg-amd64-disk1.img
+cd $HOME
+openstack image create --file="images/ubuntu-16.04-server-cloudimg-amd64-disk1.img" --container-format=bare --disk-format=qcow2 --public ubuntu:16.04
+
+

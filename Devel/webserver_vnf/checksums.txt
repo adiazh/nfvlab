@@ -1,3 +1,0 @@
-f0098012c73d844298e1cc04fd3ab251  webserver_vnfd.yaml
-f41be05ed267aae68e447f5a27e0dd8d  cloud_init/httpd-config.txt
-446d48a83c17eeae5eab906883092db5  icons/cirros-64.png

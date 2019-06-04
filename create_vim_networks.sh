@@ -1,4 +1,4 @@
-source OSM-openrc.sh 
+#source OSM-openrc.sh 
 
 echo "osm-router needs to be created before and security groups updated in horizon"
 echo "Creating networks ..."
