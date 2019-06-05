@@ -1,2 +1,2 @@
-b0019debb4ef1e4567780d0787135eed  mono-VM_nsd.yaml
+c8d4d3579cf27c9907124e242c2817ab  mono-VM_nsd.yaml
 bc681c5a4c3cdc09c013df2d2239f3d2  icons/osm_2x.png

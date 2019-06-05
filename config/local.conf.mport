@@ -1,0 +1,50 @@
+[[local|localrc]]
+IP_VERSION=4
+HOST_IP=172.16.24.211
+# RECLONE=yes
+OFFLINE=True
+
+ADMIN_PASSWORD=nomoresecrete
+DATABASE_PASSWORD=stackdb
+RABBIT_PASSWORD=stackqueue
+SERVICE_PASSWORD=nomoresecrete
+SWIFT_HASH=9e7c7f719cecf870510426e95cd801
+
+disable_service n-net
+disable_service tempest
+
+enable_service q-svc
+enable_service q-agt
+enable_service q-dhcp
+enable_service q-l3
+enable_service q-meta
+
+enable_service s-proxy s-object s-container s-account
+enable_plugin heat https://git.openstack.org/openstack/heat stable/queens
+
+CEILOMETER_BACKEND=none
+enable_plugin ceilometer https://git.openstack.org/openstack/ceilometer stable/queens
+CEILOMETER_NOTIFICATION_TOPICS=notifications,profiler
+# enable_plugin gnocchi https://github.com/gnocchixyz/gnocchi stable/4.2
+# enable_service gnocchi-grafana
+
+enable_plugin aodh https://git.openstack.org/openstack/aodh stable/queens
+
+VOLUME_GROUP_NAME="stack-volumes"
+VOLUME_NAME_PREFIX="volume-"
+VOLUME_BACKING_FILE_SIZE=20500M
+
+FIXED_RANGE=10.0.0.0/24
+NETWORK_GATEWAY=10.0.0.1
+IPV4_ADDRS_SAFE_TO_USE="10.0.0.0/22"
+
+FLOATING_RANGE=172.16.24.0/23
+Q_FLOATING_ALLOCATION_POOL=start=172.16.24.214,end=172.16.24.223
+PUBLIC_NETWORK_GATEWAY="172.16.24.1"
+PUBLIC_INTERFACE=eno1
+
+Q_USE_PROVIDERNET_FOR_PUBLIC=True
+PUBLIC_PHYSICAL_NETWORK=public
+OVS_BRIDGE_MAPPINGS=public:br-ex
+
+IMAGE_URLS+=",http://cloud-images.ubuntu.com/releases/16.04/release/ubuntu-16.04-server-cloudimg-amd64-disk1.img" # Ubuntu Server 16.04
