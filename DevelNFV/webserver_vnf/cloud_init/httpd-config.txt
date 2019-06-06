@@ -4,6 +4,9 @@ password: osm-2018
 chpasswd: {expire: False}
 ssh_pwauth: True
 
+packages:
+    - lighttpd
+
 write_files:
   - path: /etc/network/interfaces.d/51-ifcfg-ens4.cfg
     content: |
@@ -15,6 +18,24 @@ write_files:
       #!/bin/bash
       echo "Fichero creado desde cloud-config"
     permissions: '0775'
+  - path: /var/www/html/index.lighttpd.html
+    content: |
+      #!/bin/bash
+      echo "Fichero creado desde cloud-config"
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+      <meta charset="utf-8">
+      <title>title</title>
+      <link rel="stylesheet" href="style.css">
+      <script src="script.js"></script>
+      </head>
+      <body>
+      <!-- page content -->
+      Grupo 13
+      </body>
+      </html>
+    permissions: '0644'
 
 runcmd:
  - [ ifup, ens4 ]
