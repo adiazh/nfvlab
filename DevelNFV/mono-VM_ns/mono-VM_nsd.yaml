@@ -1,8 +1,8 @@
 nsd:nsd-catalog:
     nsd:
-    -   id: mono_VM_nsd
-        name: mono_VM_ns
-        short-name: mono_VM_ns
+    -   id: mono-VM_nsd
+        name: mono-VM_ns
+        short-name: mono-VM_ns
         description: NS with 1 VNF webserver
         vendor: OSM
         version: '1.0'
