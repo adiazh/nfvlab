@@ -1,0 +1,15 @@
+"name": "web1"
+"summary": "charms for installin webserver"
+"maintainer": "SDN-NFV Master 2018-19 Student <SDN-NFV.Master.2018-19.Student@laptop>"
+"description": |
+  Nothing more to add
+"tags":
+  # Replace "misc" with one or more whitelisted tags from this list:
+  # https://jujucharms.com/docs/stable/authors-charm-metadata
+  - "misc"
+  - "osm"
+  - "vnf"
+"series":
+- "xenial"
+- "trusty"
+"subordinate": !!bool "false"

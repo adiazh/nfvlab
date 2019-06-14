@@ -1,0 +1,11 @@
+updateall:
+    description: "Updates Packages"
+
+installweb:
+    description: "installs a package"
+    params:
+        package_name:
+            descrption: Package_name
+            type: string
+    required:
+        - packagename

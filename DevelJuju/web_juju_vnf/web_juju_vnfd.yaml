@@ -61,3 +61,16 @@ vnfd:vnfd-catalog:
                 type: VPORT
             -   name: eth1
                 type: VPORT
+
+        vnf-configuration:
+            juju:
+                charm: web1
+            initial-config-primitive:
+                - seq: '1'
+                  name: updateall
+            config-primitive:
+                - name: installweb
+                  parameter:
+                  - name: packagename
+                    data-type: STRING
+                    default-value: 'lighttpd'

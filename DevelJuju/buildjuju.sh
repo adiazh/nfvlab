@@ -1,8 +1,8 @@
 #export PATH=$PATH:/usr/share/osm-devops/descriptor-packages/tools/
 
 echo "Validating Descriptors ..."
-validate_descriptor.py webserver_vnf/web_juju_vnfd.yaml
-validate_descriptor.py mono-VM_ns/monojuju-VM_nsd.yaml
+validate_descriptor.py web_juju_vnf/web_juju_vnfd.yaml
+validate_descriptor.py monojuju-VM_ns/monojuju-VM_nsd.yaml
 
 sleep 1
 
